@@ -1,0 +1,21 @@
+Write a JavaScript function called classifyChild(data) that takes:
+{ age_months, weight_kg, height_cm, muac_cm }
+
+And returns a classification object:
+{
+  status: "SAM" | "MAM" | "Normal" | "At-Risk",
+  color: "red" | "orange" | "yellow" | "green",
+  wfa_zscore: number,
+  hfa_zscore: number,
+  recommendation: string,
+  urgency: "immediate" | "monitor" | "routine"
+}
+
+Use WHO child growth standard z-score approximations:
+- SAM: MUAC < 11.5cm OR WFA z-score < -3
+- MAM: MUAC 11.5-12.5cm OR WFA z-score -3 to -2  
+- At-Risk: MUAC 12.5-13.5cm OR WFA z-score -2 to -1.5
+- Normal: everything else
+
+Add realistic recommendation messages for each status.
+Export the function. Add JSDoc comments.

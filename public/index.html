@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POSHAN DRISTRI — Child Nutrition Screening</title>
+  <meta name="description"
+    content="WHO-standard child malnutrition screening and tracking dashboard for POSHAN DRISTRI." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ─── App Shell ──────────────────────────────────────────────────────────── -->
+  <div class="app-shell">
+
+    <!-- Left Icon Sidebar -->
+    <aside class="icon-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🌿</div>
+      </div>
+      <nav class="icon-nav">
+        <button class="icon-btn active" data-page="dashboard" title="Dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+          </svg>
+        </button>
+        <button class="icon-btn" data-page="register" title="Register Child">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+            <line x1="12" y1="11" x2="12" y2="17" />
+            <line x1="9" y1="14" x2="15" y2="14" />
+          </svg>
+        </button>
+        <button class="icon-btn" data-page="screen" title="Screen Child">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+        </button>
+        <button class="icon-btn" data-page="history" title="History">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+        </button>
+        <button class="icon-btn" data-page="aidetect" title="AI Detection">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+        </button>
+        <button class="icon-btn" data-page="diet" title="Balanced Diet">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" />
+            <path d="M12 6v6l4 2" />
+          </svg>
+        </button>
+      </nav>
+      <div class="sidebar-avatar">
+        <div class="avatar-circle">A</div>
+      </div>
+    </aside>
+
+    <!-- Right Content Area -->
+    <div class="content-area">
+
+      <!-- Top Navigation Bar -->
+      <header class="topnav">
+        <div class="topnav-left">
+          <span class="topnav-logo-text">POSHAN <strong>DRISTRI</strong></span>
+        </div>
+        <nav class="topnav-center">
+          <button class="topnav-btn active" data-page="dashboard">Dashboard</button>
+          <button class="topnav-btn" data-page="register">Register</button>
+          <button class="topnav-btn" data-page="screen">Screening</button>
+          <button class="topnav-btn" data-page="history">Progress</button>
+          <button class="topnav-btn" data-page="aidetect">🤖 AI Detect</button>
+          <button class="topnav-btn" data-page="diet">🥗 Diet Plan</button>
+        </nav>
+        <div class="topnav-right">
+          <!-- Translation/Language Selector -->
+          <div class="lang-selector-wrap">
+            <svg class="lang-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+              </path>
+            </svg>
+            <select id="langSelect" class="lang-select">
+              <option value="en">English</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="hinglish">Hinglish</option>
+              <option value="bn">বাংলা (Bengali)</option>
+              <option value="te">తెలుగు (Telugu)</option>
+              <option value="mr">मराठी (Marathi)</option>
+              <option value="ta">தமிழ் (Tamil)</option>
+              <option value="ur">اردو (Urdu)</option>
+              <option value="gu">ગુજરાતી (Gujarati)</option>
+              <option value="kn">ಕನ್ನಡ (Kannada)</option>
+              <option value="ml">മലയാളം (Malayalam)</option>
+              <option value="or">ଓଡ଼ିଆ (Odia)</option>
+              <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+              <option value="as">অসমীয়া (Assamese)</option>
+              <option value="mai">मैथिली (Maithili)</option>
+              <option value="sa">संस्कृतम् (Sanskrit)</option>
+            </select>
+          </div>
+          <button class="icon-action" title="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </button>
+          <div class="nav-avatar">AN</div>
+        </div>
+      </header>
+
+      <!-- Main Scrollable Content -->
+      <main class="main-content">
+
+        <!-- ═══════════════ LOGIN PAGE ═══════════════ -->
+        <section id="page-login" class="page active">
+          <div class="login-wrapper">
+            <div class="white-card login-card">
+              <div class="login-brand-icon">🌿</div>
+              <h1 class="page-heading" style="text-align:center">Login</h1>
+              <p class="page-subheading" style="text-align:center; margin-bottom:24px">Enter your mobile number to
+                access the POSHAN DRISTRI dashboard.</p>
+
+              <form id="loginForm">
+                <div class="form-group" id="loginStep1">
+                  <label class="form-label">Mobile Number</label>
+                  <input class="form-input" type="tel" id="login_mobile" placeholder="e.g. 9876543210" required />
+                  <button type="submit" class="btn-primary" style="margin-top:16px; width:100%">Send OTP</button>
+                </div>
+                <div class="form-group" id="loginStep2" style="display:none">
+                  <label class="form-label">Enter 4-digit OTP</label>
+                  <p style="font-size:12px; color:var(--text-mid); margin-bottom:8px">Test OTP is: 1234</p>
+                  <input class="form-input" type="text" id="login_otp" placeholder="1 2 3 4" maxlength="4" />
+                  <button type="button" class="btn-primary" id="verifyOtpBtn" style="margin-top:16px; width:100%">Verify
+                    & Login</button>
+                </div>
+              </form>
+              <div id="loginError" class="msg-error" style="display:none"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════ DASHBOARD PAGE ═══════════════ -->
+        <section id="page-dashboard" class="page">
+          <h1 class="page-heading">Dashboard</h1>
+          <p class="page-subheading">Track nutrition screening results and monitor child health across villages.</p>
+
+          <div class="dashboard-grid">
+
+            <!-- Left Column -->
+            <div class="dash-left">
+
+              <!-- Status Summary Card -->
+              <div class="white-card">
+                <div class="card-header-row">
+                  <span class="card-title">Screening Status</span>
+                  <span class="card-meta" id="totalScreeningsLabel">Loading…</span>
+                </div>
+                <div id="statusListCards" class="status-list">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+
+              <!-- Recent Children -->
+              <div class="white-card">
+                <div class="card-header-row">
+                  <span class="card-title">Recent Children</span>
+                  <button class="link-btn" data-page="history">See all →</button>
+                </div>
+                <div id="recentChildrenList" class="children-list">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Center Column -->
+            <div class="dash-center">
+
+              <!-- Stats Row -->
+              <div class="stats-row">
+                <div class="stat-pill stat-blue">
+                  <div class="stat-label">Total Children</div>
+                  <div class="stat-num" id="totalChildren">—</div>
+                </div>
+                <div class="stat-pill stat-green">
+                  <div class="stat-label">Normal</div>
+                  <div class="stat-num" id="normalCount">—</div>
+                </div>
+                <div class="stat-pill stat-orange">
+                  <div class="stat-label">At-Risk / MAM</div>
+                  <div class="stat-num" id="atRiskCount">—</div>
+                </div>
+                <div class="stat-pill stat-red">
+                  <div class="stat-label">SAM (Critical)</div>
+                  <div class="stat-num" id="samCount">—</div>
+                </div>
+              </div>
+
+              <!-- Performance Chart -->
+              <div class="white-card chart-card-main">
+                <div class="card-header-row">
+                  <span class="card-title">Screening Trend</span>
+                  <span class="card-badge">Live</span>
+                </div>
+                <canvas id="trendChart" height="160"></canvas>
+              </div>
+
+              <!-- Quick Actions -->
+              <div class="quick-actions-row">
+                <button class="quick-action-card qa-green" data-page="screen">
+                  <div class="qa-icon">🔍</div>
+                  <div class="qa-label">Screen a Child</div>
+                  <div class="qa-sub">Enter measurements</div>
+                </button>
+                <button class="quick-action-card qa-blue" data-page="register">
+                  <div class="qa-icon">➕</div>
+                  <div class="qa-label">Register Child</div>
+                  <div class="qa-sub">Add new profile</div>
+                </button>
+                <button class="quick-action-card qa-purple" data-page="history">
+                  <div class="qa-icon">📋</div>
+                  <div class="qa-label">View History</div>
+                  <div class="qa-sub">All screenings</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="dash-right">
+
+              <!-- Donut Chart -->
+              <div class="white-card">
+                <div class="card-header-row">
+                  <span class="card-title">Distribution</span>
+                </div>
+                <div class="donut-wrap">
+                  <canvas id="donutChart"></canvas>
+                </div>
+                <div class="donut-legend" id="donutLegend"></div>
+              </div>
+
+              <!-- Recent Alerts -->
+              <div class="white-card">
+                <div class="card-header-row">
+                  <span class="card-title">Alerts</span>
+                  <span class="alert-badge" id="alertCount">0</span>
+                </div>
+                <div id="alertsList" class="alerts-list">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════ SCREEN CHILD PAGE ═══════════════ -->
+        <section id="page-screen" class="page">
+          <h1 class="page-heading">Screen a Child</h1>
+          <p class="page-subheading">Enter anthropometric measurements to classify nutritional status using WHO
+            standards.</p>
+
+          <div class="screen-layout">
+            <!-- Form -->
+            <div class="white-card screen-form-card">
+              <form id="screenForm">
+                <div class="form-group">
+                  <label class="form-label">Child ID</label>
+                  <div class="input-row">
+                    <input class="form-input" type="text" id="screen_child_id" placeholder="e.g. C-1001" />
+                    <button type="button" class="btn-lookup" id="lookupBtn">Lookup</button>
+                  </div>
+                  <div class="child-found-box" id="childInfoBox" style="display:none"></div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Age <span class="unit">(months)</span></label>
+                    <input class="form-input" type="number" id="age_months" placeholder="0 – 60" min="0" max="60"
+                      step="1" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Weight <span class="unit">(kg)</span></label>
+                    <input class="form-input" type="number" id="weight_kg" placeholder="e.g. 8.5" min="0.5" max="50"
+                      step="0.1" required />
+                  </div>
+                </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Height <span class="unit">(cm)</span></label>
+                    <input class="form-input" type="number" id="height_cm" placeholder="e.g. 75.5" min="30" max="130"
+                      step="0.1" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">MUAC <span class="unit">(cm)</span>
+                      <button type="button" class="muac-help-btn" id="muacHelpBtn">📏 कैसे मापें?</button>
+                    </label>
+                    <input class="form-input" type="number" id="muac_cm" placeholder="e.g. 12.5" min="5" max="30"
+                      step="0.1" required />
+                    <!-- MUAC How-to Guide (collapsible) -->
+                    <div class="muac-guide-box" id="muacGuideBox" style="display:none">
+                      <div class="muac-guide-title">📏 MUAC (बांह की मोटाई) कैसे मापें?</div>
+                      <div class="muac-steps">
+                        <div class="muac-step">
+                          <div class="mstep-num">1</div>
+                          <div class="mstep-text">बच्चे की <strong>बायीं बांह</strong> (left arm) सीधी रखें। कंधे से
+                            कोहनी तक की लंबाई का <strong>बीच का हिस्सा</strong> ढूंढें।</div>
+                        </div>
+                        <div class="muac-step">
+                          <div class="mstep-num">2</div>
+                          <div class="mstep-text">MUAC टेप या मापने वाली पट्टी उस बीच वाली जगह पर <strong>हल्के से
+                              लपेटें</strong> — न ज़्यादा कसी, न ढीली।</div>
+                        </div>
+                        <div class="muac-step">
+                          <div class="mstep-num">3</div>
+                          <div class="mstep-text">जहाँ टेप का शून्य (0) मिलता है वहाँ <strong>माप (cm में)
+                              पढ़ें</strong> और यहाँ दर्ज करें।</div>
+                        </div>
+                        <div class="muac-step">
+                          <div class="mstep-num">4</div>
+                          <div class="mstep-text">अगर MUAC रंगीन टेप है तो रंग देखें — <strong>लाल = SAM, पीला = MAM,
+                              हरा = Normal</strong>।</div>
+                        </div>
+                      </div>
+                      <!-- Color Band -->
+                      <div class="muac-color-band">
+                        <div class="mcb-seg mcb-red"><span>&#60;11.5</span><strong>SAM</strong></div>
+                        <div class="mcb-seg mcb-yellow"><span>11.5–12.5</span><strong>MAM</strong></div>
+                        <div class="mcb-seg mcb-ltyellow"><span>12.5–13.5</span><strong>At-Risk</strong></div>
+                        <div class="mcb-seg mcb-green"><span>&#62;13.5</span><strong>Normal</strong></div>
+                      </div>
+                      <div class="muac-tip">💡 टिप: बच्चे को अपनी बांह ढीली रखने को कहें। मापते वक्त बच्चा शांत होना
+                        चाहिए।</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Screened By</label>
+                  <input class="form-input" type="text" id="screened_by" placeholder="ANM / ASHA / Supervisor name" />
+                </div>
+
+                <div class="form-btns">
+                  <button type="submit" class="btn-primary">Classify &amp; Save to DB</button>
+                  <button type="button" class="btn-secondary" id="quickClassifyBtn">Quick Classify Only</button>
+                </div>
+              </form>
+              <div id="screenError" class="msg-error" style="display:none"></div>
+            </div>
+
+            <!-- Result Panel -->
+            <div id="resultCard" class="result-panel" style="display:none">
+              <div class="result-banner" id="resultBanner">
+                <div class="result-big-emoji" id="resultEmoji"></div>
+                <div class="result-status-text" id="resultStatus"></div>
+                <div class="result-urgency-chip" id="resultUrgency"></div>
+              </div>
+
+              <!-- MUAC Meter -->
+              <div class="muac-meter-section">
+                <div class="muac-meter-label">MUAC Indicator</div>
+                <div class="muac-track">
+                  <div class="muac-seg mseg-red"></div>
+                  <div class="muac-seg mseg-orange"></div>
+                  <div class="muac-seg mseg-yellow"></div>
+                  <div class="muac-seg mseg-green"></div>
+                  <div class="muac-marker" id="muacMarker"></div>
+                </div>
+                <div class="muac-track-labels">
+                  <span>10</span><span>11.5</span><span>12.5</span><span>13.5</span><span>16+</span>
+                </div>
+              </div>
+
+              <div class="score-chips">
+                <div class="score-chip">
+                  <span class="chip-label">WFA z-score</span>
+                  <span class="chip-val" id="wfaScore">—</span>
+                </div>
+                <div class="score-chip">
+                  <span class="chip-label">HFA z-score</span>
+                  <span class="chip-val" id="hfaScore">—</span>
+                </div>
+                <div class="score-chip">
+                  <span class="chip-label">MUAC</span>
+                  <span class="chip-val" id="muacDisplay">—</span>
+                </div>
+              </div>
+
+              <div class="recommendation-box" id="resultRec"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════ HISTORY PAGE ═══════════════ -->
+        <section id="page-history" class="page">
+          <h1 class="page-heading">Progress &amp; History</h1>
+          <p class="page-subheading">All past screening records. Filter and track improvement over time.</p>
+
+          <div class="history-controls">
+            <input type="text" id="historySearch" class="search-box" placeholder="Search by name, village, child ID…" />
+            <select id="statusFilter" class="filter-box">
+              <option value="">All Statuses</option>
+              <option value="SAM">🔴 SAM</option>
+              <option value="MAM">🟠 MAM</option>
+              <option value="At-Risk">🟡 At-Risk</option>
+              <option value="Normal">🟢 Normal</option>
+            </select>
+            <button class="btn-ghost" id="refreshHistory">↻ Refresh</button>
+          </div>
+
+          <div class="white-card table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Child ID</th>
+                  <th>Name</th>
+                  <th>Village</th>
+                  <th>Age (mo)</th>
+                  <th>MUAC</th>
+                  <th>WFA z</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="historyTable">
+                <tr>
+                  <td colspan="9" class="tbl-loading">Loading…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ═══════════════ REGISTER PAGE ═══════════════ -->
+        <section id="page-register" class="page">
+          <h1 class="page-heading">Register a Child</h1>
+          <p class="page-subheading">Create a new child profile before running screenings.</p>
+
+          <div class="screen-layout">
+            <div class="white-card screen-form-card">
+              <form id="registerForm">
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Full Name <span class="req">*</span></label>
+                    <input class="form-input" type="text" id="reg_name" placeholder="Child's full name" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Gender</label>
+                    <select class="form-input" id="reg_gender">
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Village / Tola</label>
+                    <input class="form-input" type="text" id="reg_village" placeholder="e.g. Rampur" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">AWC Name / Code</label>
+                    <input class="form-input" type="text" id="reg_awc" placeholder="e.g. AWC-12" />
+                  </div>
+                </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Parent / Guardian Name</label>
+                    <input class="form-input" type="text" id="reg_parent" placeholder="Parent or guardian's name" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Mobile Number</label>
+                    <input class="form-input" type="tel" id="reg_mobile" placeholder="e.g. 9876543210" />
+                  </div>
+                </div>
+                <div class="form-btns">
+                  <button type="submit" class="btn-primary">Register Child</button>
+                </div>
+              </form>
+              <div id="registerSuccess" class="msg-success" style="display:none"></div>
+              <div id="registerError" class="msg-error" style="display:none"></div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="white-card info-panel">
+              <div class="info-icon">💡</div>
+              <h3 class="info-title">How it works</h3>
+              <div class="info-step">
+                <div class="step-num">1</div>
+                <div class="step-text">Register the child with their name, village, and AWC details.</div>
+              </div>
+              <div class="info-step">
+                <div class="step-num">2</div>
+                <div class="step-text">Go to <strong>Screening</strong> and enter the child's measurements using their
+                  Child ID.</div>
+              </div>
+              <div class="info-step">
+                <div class="step-num">3</div>
+                <div class="step-text">Get WHO-classified nutritional status — SAM, MAM, At-Risk, or Normal — with
+                  recommendations.</div>
+              </div>
+              <div class="info-step">
+                <div class="step-num">4</div>
+                <div class="step-text">Track progress over time in the <strong>History</strong> tab.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════ AI DETECTION PAGE ═══════════════ -->
+        <section id="page-aidetect" class="page">
+          <h1 class="page-heading">AI Image Detection</h1>
+          <p class="page-subheading">Upload a child's photo to analyse visible signs of malnutrition using AI.</p>
+
+          <div class="screen-layout">
+            <!-- Upload Card -->
+            <div class="white-card screen-form-card">
+              <div class="ai-upload-zone" id="aiUploadZone">
+                <div class="ai-upload-icon">📷</div>
+                <div class="ai-upload-title">Drop photo here or click to upload</div>
+                <div class="ai-upload-sub">Supports JPG, PNG, WEBP · Max 5MB</div>
+                <input type="file" id="aiImageInput" accept="image/*" style="display:none" />
+                <button type="button" class="btn-primary" style="margin-top:16px" id="aiSelectBtn">Select Photo</button>
+              </div>
+              <img id="aiPreviewImg"
+                style="display:none;width:100%;border-radius:12px;margin-top:16px;max-height:260px;object-fit:cover" />
+              <div id="aiAnalyzeWrap" style="display:none;margin-top:16px">
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Child Age <span class="unit">(months)</span></label>
+                    <input class="form-input" type="number" id="ai_age" placeholder="0–60" min="0" max="60" step="1" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">MUAC <span class="unit">(cm, optional)</span></label>
+                    <input class="form-input" type="number" id="ai_muac" placeholder="e.g. 12.5" min="5" max="30"
+                      step="0.1" />
+                  </div>
+                </div>
+                <button class="btn-primary" id="aiAnalyzeBtn" style="width:100%">🤖 Analyse with AI</button>
+              </div>
+              <div id="aiError" class="msg-error" style="display:none"></div>
+            </div>
+
+            <!-- AI Result -->
+            <div id="aiResultPanel" style="display:none" class="result-panel">
+              <div class="result-banner" id="aiResultBanner">
+                <div class="result-big-emoji" id="aiResultEmoji"></div>
+                <div class="result-status-text" id="aiResultStatus"></div>
+                <div class="result-urgency-chip" id="aiResultConfidence"></div>
+              </div>
+              <div class="white-card" style="margin-top:0">
+                <div class="card-title" style="margin-bottom:12px">🔍 Visual Indicators Detected</div>
+                <div id="aiIndicators" class="ai-indicators-list"></div>
+              </div>
+              <div class="recommendation-box" id="aiRecommendation"></div>
+              <div class="white-card"
+                style="background:var(--blue-soft);border:none;font-size:12px;color:var(--text-mid);margin-top:0">
+                ⚠️ <strong>Note:</strong> AI detection is a screening aid only. Always confirm with physical MUAC
+                measurement and a trained health worker.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════ DIET PLAN PAGE ═══════════════ -->
+        <section id="page-diet" class="page">
+          <h1 class="page-heading">Balanced Diet Plan</h1>
+          <p class="page-subheading">Evidence-based nutrition recommendations by status. Select a classification to see
+            the complete diet plan.</p>
+
+          <div class="diet-tab-row" id="dietTabRow">
+            <button class="diet-tab active" data-status="SAM">🔴 SAM</button>
+            <button class="diet-tab" data-status="MAM">🟠 MAM</button>
+            <button class="diet-tab" data-status="At-Risk">🟡 At-Risk</button>
+            <button class="diet-tab" data-status="Normal">🟢 Normal</button>
+          </div>
+
+          <div id="dietContent" class="diet-content-area"></div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CHILD DETAILS MODAL ═══════════════ -->
+  <div id="childDetailsModal" class="modal-overlay" style="display:none">
+    <div class="modal-content child-details-modal">
+      <div class="modal-header">
+        <h2 id="cdModalTitle">Child Profile</h2>
+        <button class="modal-close-btn" onclick="closeChildDetailsModal()">×</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Profile summary card -->
+        <div class="cd-profile-card">
+          <div class="cd-avatar" id="cdAvatar">C</div>
+          <div class="cd-info">
+            <h3 id="cdName">—</h3>
+            <p class="cd-meta" id="cdMeta">—</p>
+            <p class="cd-parent-info" id="cdParentStr"
+              style="font-size:13px; color:var(--text-mid); margin-top:4px; display:flex; gap:12px">
+              <span id="cdParent">—</span>
+              <span id="cdMobile">—</span>
+            </p>
+          </div>
+          <div class="cd-status-badge" id="cdCurrentStatus">—</div>
+        </div>
+
+        <!-- Screening History Timeline -->
+        <h3 class="cd-section-title">Screening History</h3>
+        <div class="cd-timeline" id="cdTimeline">
+          <!-- Populated by JS -->
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
