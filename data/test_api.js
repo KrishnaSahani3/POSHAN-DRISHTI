@@ -32,7 +32,7 @@ function get(path) {
 
 async function runTests() {
   console.log("=".repeat(60));
-  console.log(" POSHAN DRISTRI API — Endpoint Tests");
+  console.log(" POSHAN DRISHTI API — Endpoint Tests");
   console.log("=".repeat(60));
 
   // 1. Health check

@@ -2,7 +2,7 @@ window.I18N = {
   current: "en",
   langs: {
     en: {
-      nav: { dash: "Dashboard", reg: "Register", scr: "Screening", prog: "Progress", ai: "🤖 AI Detect", diet: "🥗 Diet Plan" },
+      nav: { dash: "Dashboard", reg: "Register", scr: "Screening", prog: "Progress", ai: "🤖 AI Detect", diet: "🥗 Diet Plan", bmi: "⚖️ BMI Calc", calorie: "🍱 Calorie Calc" },
       ui: {
         stats: "Screening Status",
         recent: "Recent Children",
@@ -43,7 +43,7 @@ window.I18N = {
       }
     },
     hi: {
-      nav: { dash: "डैशबोर्ड", reg: "पंजीकरण", scr: "जांच (Screening)", prog: "प्रगति", ai: "🤖 AI जांच", diet: "🥗 आहार योजना" },
+      nav: { dash: "डैशबोर्ड", reg: "पंजीकरण", scr: "जांच (Screening)", prog: "प्रगति", ai: "🤖 AI जांच", diet: "🥗 आहार योजना", bmi: "⚖️ BMI गणक", calorie: "🍱 कैलोरी गणक" },
       ui: {
         stats: "पोषण स्थिति विवरण",
         recent: "हाल ही में जांचे गए बच्चे",
@@ -84,7 +84,7 @@ window.I18N = {
       }
     },
     hinglish: {
-      nav: { dash: "Dashboard", reg: "Registration", scr: "Screening", prog: "Progress", ai: "🤖 AI Detect", diet: "🥗 Diet Plan" },
+      nav: { dash: "Dashboard", reg: "Registration", scr: "Screening", prog: "Progress", ai: "🤖 AI Detect", diet: "🥗 Diet Plan", bmi: "⚖️ BMI Calculator", calorie: "🍱 Calorie Calc" },
       ui: {
         stats: "Poshan Status Summary",
         recent: "Recent Bachhe",

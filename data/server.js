@@ -1,5 +1,5 @@
 /**
- * @fileoverview POSHAN DRISTRI — Full Express REST API + Static Frontend Server
+ * @fileoverview POSHAN DRISHTI — Full Express REST API + Static Frontend Server
  */
 
 const express = require("express");
@@ -15,6 +15,17 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Ensure DB is ready before handling requests (crucial for serverless)
+app.use(async (req, res, next) => {
+  try {
+    await database.initDB();
+    next();
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Database initialization failed: " + err.message });
+  }
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, _res, next) => {
@@ -43,7 +54,7 @@ function validateMeasurements(body) {
 
 // ─── Health & Meta ───────────────────────────────────────────────────────────
 app.get("/api/health", (_req, res) => {
-  res.json({ success: true, message: "POSHAN DRISTRI API is running", version: "2.0.0", timestamp: new Date().toISOString() });
+  res.json({ success: true, message: "POSHAN DRISHTI API is running", version: "2.0.0", timestamp: new Date().toISOString() });
 });
 
 app.get("/api/stats", (_req, res) => {
@@ -187,9 +198,29 @@ app.get("/api/analytics", (_req, res) => {
   }
 });
 
+// ─── Doctors ──────────────────────────────────────────────────────────────────
+app.get("/api/doctors", (req, res) => {
+  try {
+    const { area } = req.query;
+    const doctors = database.getDoctorsByArea(area);
+    res.json({ success: true, doctors });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.get("/api/areas", (_req, res) => {
+  try {
+    const areas = database.getAllAreas();
+    res.json({ success: true, areas: areas.map(a => a.area) });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req, res) => {
-  res.status(404).json({ success: false, error: "Route not found", available_routes: ["GET /api/health", "GET /api/stats", "GET /api/children", "POST /api/children", "GET /api/children/:id", "POST /api/classify", "POST /api/classify/batch", "GET /api/screenings", "POST /api/screenings", "GET /api/screenings/:child_id", "GET /api/analytics"] });
+  res.status(404).json({ success: false, error: "Route not found", available_routes: ["GET /api/health", "GET /api/stats", "GET /api/children", "POST /api/children", "GET /api/children/:id", "POST /api/classify", "POST /api/classify/batch", "GET /api/screenings", "POST /api/screenings", "GET /api/screenings/:child_id", "GET /api/analytics", "GET /api/doctors", "GET /api/areas"] });
 });
 
 app.use((err, _req, res, _next) => {
@@ -198,15 +229,17 @@ app.use((err, _req, res, _next) => {
 });
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-database.initDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`\n🚀 POSHAN DRISTRI running at http://localhost:${PORT}`);
-    console.log(`   Dashboard: http://localhost:${PORT}`);
-    console.log(`   API:       http://localhost:${PORT}/api/health\n`);
+if (process.env.NODE_ENV !== "test") {
+  database.initDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`\n🚀 POSHAN DRISHTI running at http://localhost:${PORT}`);
+      console.log(`   Dashboard: http://localhost:${PORT}`);
+      console.log(`   API:       http://localhost:${PORT}/api/health\n`);
+    });
+  }).catch(err => {
+    console.error("Failed to initialize DB:", err);
   });
-}).catch(err => {
-  console.error("Failed to initialize DB:", err);
-  process.exit(1);
-});
+}
 
 module.exports = app;
+// module.exports.handler = require("serverless-http")(app);

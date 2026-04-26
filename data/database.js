@@ -1,20 +1,24 @@
 /**
- * @fileoverview SQLite database layer for POSHAN DRISTRI using sql.js (pure JS).
- * Persists data to poshan_dristri.db file on disk.
+ * @fileoverview SQLite database layer for POSHAN DRISHTI using sql.js (pure JS).
+ * Persists data to poshan_drishti.db file on disk.
  */
 
 const initSqlJs = require("sql.js");
 const fs = require("fs");
 const path = require("path");
 
-const DB_PATH = path.join(__dirname, "poshan_dristri.db");
+const DB_PATH = path.join(__dirname, "poshan_drishti.db");
 
 let db = null;
 
 /** Save DB to disk */
 function persist() {
-  const data = db.export();
-  fs.writeFileSync(DB_PATH, Buffer.from(data));
+  try {
+    const data = db.export();
+    fs.writeFileSync(DB_PATH, Buffer.from(data));
+  } catch (err) {
+    console.warn("⚠️ Persistence failed (expected on read-only systems like Netlify):", err.message);
+  }
 }
 
 /** Run a write statement and persist */
@@ -48,6 +52,8 @@ function genChildId() {
 
 /** Initialize DB (call once at startup) */
 async function initDB() {
+  if (db) return; // Already initialized
+
   const SQL = await initSqlJs();
 
   if (fs.existsSync(DB_PATH)) {
@@ -90,12 +96,39 @@ async function initDB() {
       screened_by  TEXT DEFAULT 'ANM/ASHA',
       screened_at  TEXT DEFAULT (datetime('now','localtime'))
     );
+
+    CREATE TABLE IF NOT EXISTS doctors (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      name         TEXT NOT NULL,
+      specialty    TEXT NOT NULL,
+      hospital     TEXT,
+      area         TEXT NOT NULL,
+      contact      TEXT,
+      availability TEXT
+    );
   `);
 
   // Seed demo data if empty
   const countRow = get("SELECT COUNT(*) AS n FROM children");
   if (!countRow || countRow.n === 0) {
     const { classifyChild } = require("./classifyChild");
+
+    // Seed doctors
+    const demoDoctors = [
+      { name: "Dr. Anjali Sharma", specialty: "Pediatrician", hospital: "City General Hospital", area: "Rampur", contact: "9876500111", availability: "Mon-Sat, 10am-4pm" },
+      { name: "Dr. Vikram Seth", specialty: "Nutrition Specialist", hospital: "Healthy Kids Clinic", area: "Bhagpur", contact: "9876500222", availability: "Tue, Thu, Sat, 2pm-6pm" },
+      { name: "Dr. Meera Iyer", specialty: "Child Specialist", hospital: "Mother & Child Care", area: "Sonpur", contact: "9876500333", availability: "Daily, 9am-12pm" },
+      { name: "Dr. Rahul Verma", specialty: "Pediatrician", hospital: "Public Health Center", area: "Lakhanpur", contact: "9876500444", availability: "Mon-Fri, 10am-5pm" },
+      { name: "Dr. Sangeeta Rao", specialty: "General Physician", hospital: "Community Health Center", area: "Rampur", contact: "9876500555", availability: "Wed, Fri, 3pm-7pm" },
+    ];
+
+    for (const d of demoDoctors) {
+      db.run(
+        `INSERT INTO doctors (name, specialty, hospital, area, contact, availability) VALUES (?,?,?,?,?,?)`,
+        [d.name, d.specialty, d.hospital, d.area, d.contact, d.availability]
+      );
+    }
+
     const demoChildren = [
       { child_id: "C-1001", name: "Aarav Singh", gender: "male", village: "Rampur", awc_name: "AWC-12", guardian: "Meena Singh", parent_name: "Ramesh Singh", mobile_no: "9876543210", data: { age_months: 18, weight_kg: 6.5, height_cm: 72, muac_cm: 11.0 } },
       { child_id: "C-1002", name: "Priya Yadav", gender: "female", village: "Bhagpur", awc_name: "AWC-07", guardian: "Sunita Yadav", parent_name: "Ramesh Yadav", mobile_no: "9876543211", data: { age_months: 24, weight_kg: 8.2, height_cm: 80, muac_cm: 12.1 } },
@@ -192,5 +225,14 @@ module.exports = {
       ORDER BY date DESC LIMIT 90
     `);
     return { totalChildren, totalScreenings, statusCounts, recentScreenings, trendData };
+  },
+
+  getDoctorsByArea(area) {
+    if (!area) return all("SELECT * FROM doctors");
+    return all("SELECT * FROM doctors WHERE area = ?", [area]);
+  },
+
+  getAllAreas() {
+    return all("SELECT DISTINCT area FROM doctors");
   },
 };

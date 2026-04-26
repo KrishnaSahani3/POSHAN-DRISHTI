@@ -1,8 +1,8 @@
 @echo off
-title POSHAN DRISTRI Server
+title POSHAN DRISHTI Server
 echo.
 echo  ============================================
-echo   POSHAN DRISTRI — Starting Server...
+echo   POSHAN DRISHTI — Starting Server...
 echo  ============================================
 echo.
 start "" "http://localhost:3000"

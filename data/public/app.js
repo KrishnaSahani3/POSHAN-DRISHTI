@@ -1,26 +1,29 @@
 /* ─────────────────────────────────────────────────────────
-   POSHAN DRISTRI — Frontend App (app.js)
+   POSHAN DRISHTI — Frontend App (app.js)
    SPA navigation, API calls, Chart.js charts
 ───────────────────────────────────────────────────────── */
 
 const API = "";   // same origin
 
 // ─── SPA Navigation ──────────────────────────────────────
-let authToken = null;
+let authToken = "demo-token"; // Set a demo token so pages are accessible during development
 let currentMobileNo = "";
 
 function showPage(name) {
-  // Enforce login
+  // Enforce login - temporarily relaxed for better UX during development
   if (!authToken && name !== "login") {
     name = "login";
   }
 
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   const target = document.getElementById("page-" + name);
-  if (target) target.classList.add("active");
+  if (target) {
+    target.classList.add("active");
+    // Scroll to top
+    window.scrollTo(0, 0);
+  }
 
   // Toggle app shell visibility
-  const appShell = document.querySelector(".app-shell");
   if (name === "login") {
     document.querySelector(".icon-sidebar").style.display = "none";
     document.querySelector(".topnav").style.display = "none";
@@ -33,11 +36,10 @@ function showPage(name) {
     document.querySelector(".main-content").style.marginTop = "var(--topnav-h)";
   }
 
-  // top nav active
+  // update active states
   document.querySelectorAll(".topnav-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.page === name);
   });
-  // icon nav active
   document.querySelectorAll(".icon-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.page === name);
   });
@@ -45,7 +47,17 @@ function showPage(name) {
   // Lazy-load page data
   if (name === "dashboard") loadDashboard();
   if (name === "history") loadHistory();
+  if (name === "diet") renderDiet("SAM");
 }
+
+// Global navigation listener
+document.addEventListener("click", (e) => {
+  const navEl = e.target.closest("[data-page]");
+  if (navEl) {
+    e.preventDefault();
+    showPage(navEl.dataset.page);
+  }
+});
 
 // ─── Auth (OTP Login) ────────────────────────────────────
 document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
@@ -111,10 +123,6 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
 
 document.getElementById("verifyOtpBtn")?.addEventListener("click", () => {
   document.getElementById("loginForm").dispatchEvent(new Event("submit"));
-});
-
-document.querySelectorAll("[data-page]").forEach(el => {
-  el.addEventListener("click", () => showPage(el.dataset.page));
 });
 
 // ─── Charts ──────────────────────────────────────────────
@@ -429,6 +437,72 @@ function showResult(cls, muac) {
   // MUAC needle — map muac 10–16+ to 0–100%
   const pct = Math.min(Math.max(((muac - 10) / (16 - 10)) * 100, 2), 98);
   document.getElementById("muacMarker").style.left = pct + "%";
+
+  // Doctor suggestions based on child area
+  loadDoctorSuggestions();
+}
+
+async function loadDoctorSuggestions() {
+  const cid = document.getElementById("screen_child_id").value.trim();
+  const dsBox = document.getElementById("doctorSuggestions");
+  const dList = document.getElementById("doctorList");
+  
+  if (!cid) {
+    dsBox.style.display = "none";
+    return;
+  }
+
+  try {
+    const childRes = await fetch(`${API}/api/children/${cid}`);
+    const childData = await childRes.json();
+    if (!childData.success || !childData.child.village) {
+      dsBox.style.display = "none";
+      return;
+    }
+
+    const area = childData.child.village;
+    const docRes = await fetch(`${API}/api/doctors?area=${encodeURIComponent(area)}`);
+    const docData = await docRes.json();
+
+    if (docData.success && docData.doctors.length > 0) {
+      dsBox.style.display = "block";
+      dList.innerHTML = docData.doctors.map(d => `
+        <div class="doctor-card">
+          <div class="dc-header">
+            <span class="dc-name">${d.name}</span>
+            <span class="dc-specialty">${d.specialty}</span>
+          </div>
+          <div class="dc-hospital">🏥 ${d.hospital || "General Hospital"}</div>
+          <div class="dc-contact">📞 ${d.contact || "—"}</div>
+          <div class="dc-availability">⏰ ${d.availability || "—"}</div>
+        </div>
+      `).join("");
+    } else {
+      // Fallback: search for all doctors if none in specific area
+      const allDocRes = await fetch(`${API}/api/doctors`);
+      const allDocData = await allDocRes.json();
+      if (allDocData.success && allDocData.doctors.length > 0) {
+        dsBox.style.display = "block";
+        dList.innerHTML = `<div style="font-size:11px;color:var(--text-light);margin-bottom:8px">No doctors found in ${area}. Showing nearby specialists:</div>` + 
+          allDocData.doctors.slice(0, 2).map(d => `
+            <div class="doctor-card">
+              <div class="dc-header">
+                <span class="dc-name">${d.name}</span>
+                <span class="dc-specialty">${d.specialty}</span>
+              </div>
+              <div class="dc-hospital">🏥 ${d.hospital || "General Hospital"}</div>
+              <div class="dc-contact">📞 ${d.contact || "—"}</div>
+              <div class="dc-availability">⏰ ${d.availability || "—"}</div>
+            </div>
+          `).join("");
+      } else {
+        dsBox.style.display = "none";
+      }
+    }
+  } catch (err) {
+    console.error("Error loading doctors:", err);
+    dsBox.style.display = "none";
+  }
 }
 
 // ─── Register Child ───────────────────────────────────────
@@ -679,6 +753,8 @@ function applyTranslations() {
     if (page === "history") btn.textContent = langData.nav.prog;
     if (page === "aidetect") btn.textContent = langData.nav.ai;
     if (page === "diet") btn.textContent = langData.nav.diet;
+    if (page === "bmicalc") btn.textContent = langData.nav.bmi || "⚖️ BMI Calc";
+    if (page === "caloriecalc") btn.textContent = langData.nav.calorie || "🍱 Calorie Calc";
   });
 
   // UI labels updates based on availability
@@ -738,21 +814,6 @@ document.getElementById("dietTabRow")?.addEventListener("click", (e) => {
   document.querySelectorAll(".diet-tab").forEach(t => t.classList.remove("active"));
   btn.classList.add("active");
   renderDiet(btn.dataset.status);
-});
-
-// Auto-render SAM diet on page load of diet tab
-const origShowPage = showPage;
-// Patch showPage to also init diet
-const _origShowPage = showPage;
-function showPagePatched(name) {
-  _origShowPage(name);
-  if (name === "diet") renderDiet("SAM");
-}
-document.querySelectorAll("[data-page]").forEach(el => {
-  el.removeEventListener("click", () => { });
-});
-document.querySelectorAll("[data-page]").forEach(el => {
-  el.addEventListener("click", () => showPagePatched(el.dataset.page));
 });
 
 // ─── CHILD DETAILS MODAL ─────────────────────────────────
@@ -851,5 +912,470 @@ function closeChildDetailsModal() {
 // Close modal when clicking overlay background
 document.getElementById("childDetailsModal")?.addEventListener("click", e => {
   if (e.target.id === "childDetailsModal") closeChildDetailsModal();
+});
+
+// ═══════════════════════════════════════════════════════════
+// ─── BMI CALCULATOR ──────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+
+document.getElementById("bmiForm")?.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const weight = parseFloat(document.getElementById("bmi_weight").value);
+  const heightCm = parseFloat(document.getElementById("bmi_height").value);
+
+  if (isNaN(weight) || isNaN(heightCm) || heightCm <= 0) {
+    showError("bmiError", "Please enter valid weight and height values.");
+    return;
+  }
+  hideError("bmiError");
+
+  const heightM = heightCm / 100;
+  const bmi = weight / (heightM * heightM);
+  const bmiFixed = bmi.toFixed(1);
+
+  let category, bannerClass, emoji, recommendation;
+
+  if (bmi < 18.5) {
+    category = "Underweight"; bannerClass = "banner-yellow"; emoji = "⚠️";
+    recommendation = "You are underweight. Consult a nutritionist for a balanced weight-gain diet plan rich in proteins and healthy fats.";
+  } else if (bmi < 25) {
+    category = "Normal Weight"; bannerClass = "banner-green"; emoji = "✅";
+    recommendation = "Excellent! You have a healthy body weight. Maintain a balanced diet and at least 30 minutes of physical activity daily.";
+  } else if (bmi < 30) {
+    category = "Overweight"; bannerClass = "banner-orange"; emoji = "⚡";
+    recommendation = "You are overweight. Consider increasing physical activity and reducing refined carbohydrates and sugars from your diet.";
+  } else if (bmi < 35) {
+    category = "Obese (Class I)"; bannerClass = "banner-red"; emoji = "🚨";
+    recommendation = "BMI indicates Class I obesity. Please consult a doctor for a personalized weight management plan.";
+  } else if (bmi < 40) {
+    category = "Obese (Class II)"; bannerClass = "banner-red"; emoji = "🚨";
+    recommendation = "BMI indicates Class II obesity. Medical intervention is strongly recommended. Please see a healthcare professional.";
+  } else {
+    category = "Obese (Class III)"; bannerClass = "banner-red"; emoji = "🚨";
+    recommendation = "BMI indicates severe (morbid) obesity. Immediate medical consultation is required.";
+  }
+
+  const card = document.getElementById("bmiResultCard");
+  const banner = document.getElementById("bmiBanner");
+  card.style.display = "flex";
+  banner.className = "result-banner " + bannerClass;
+  document.getElementById("bmiEmoji").textContent = emoji;
+  document.getElementById("bmiValue").textContent = `BMI: ${bmiFixed}`;
+  document.getElementById("bmiCategory").textContent = category;
+  document.getElementById("bmiWeightDisplay").textContent = weight + " kg";
+  document.getElementById("bmiHeightDisplay").textContent = heightCm + " cm";
+  document.getElementById("bmiFinalValue").textContent = bmiFixed;
+  document.getElementById("bmiRecommendation").textContent = recommendation;
+
+  // BMI scale needle: map 16–40 to 0–98%
+  const pct = Math.min(Math.max(((bmi - 16) / (40 - 16)) * 100, 2), 98);
+  document.getElementById("bmiMarker").style.left = pct + "%";
+
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+document.getElementById("bmiResetBtn")?.addEventListener("click", () => {
+  document.getElementById("bmiForm").reset();
+  document.getElementById("bmiResultCard").style.display = "none";
+  hideError("bmiError");
+});
+
+
+// ═══════════════════════════════════════════════════════════
+// ─── CALORIE CALCULATOR (AI IMAGE DETECTION) ─────────────
+// ═══════════════════════════════════════════════════════════
+
+// ─── Food Database ───────────────────────────────────────
+const FOOD_DB = {
+  // Grains & Staples
+  "rice": { name: "Rice (cooked, 1 cup)", cal: 206, protein: 4.3, carbs: 44.5, fat: 0.4, emoji: "🍚" },
+  "roti": { name: "Roti / Chapati (1 piece)", cal: 71, protein: 2.7, carbs: 14.5, fat: 0.9, emoji: "🫓" },
+  "bread": { name: "Bread (1 slice)", cal: 79, protein: 2.7, carbs: 15.1, fat: 1.0, emoji: "🍞" },
+  "pasta": { name: "Pasta (cooked, 1 cup)", cal: 220, protein: 8.1, carbs: 43.2, fat: 1.3, emoji: "🍝" },
+  "noodles": { name: "Noodles (cooked, 1 cup)", cal: 210, protein: 7.5, carbs: 41.0, fat: 1.2, emoji: "🍜" },
+  "idli": { name: "Idli (1 piece)", cal: 39, protein: 1.8, carbs: 7.9, fat: 0.2, emoji: "🫓" },
+  "dosa": { name: "Dosa (1 piece)", cal: 133, protein: 3.6, carbs: 24.8, fat: 2.6, emoji: "🥞" },
+  "poha": { name: "Poha (1 cup)", cal: 250, protein: 4.0, carbs: 48.0, fat: 5.0, emoji: "🍽️" },
+  "upma": { name: "Upma (1 cup)", cal: 230, protein: 5.0, carbs: 42.0, fat: 5.5, emoji: "🍽️" },
+  // Proteins
+  "egg": { name: "Egg (1 whole, boiled)", cal: 78, protein: 6.3, carbs: 0.6, fat: 5.3, emoji: "🥚" },
+  "chicken": { name: "Chicken (grilled, 100g)", cal: 165, protein: 31.0, carbs: 0, fat: 3.6, emoji: "🍗" },
+  "fish": { name: "Fish (cooked, 100g)", cal: 136, protein: 26.0, carbs: 0, fat: 3.0, emoji: "🐟" },
+  "dal": { name: "Dal / Lentils (1 cup)", cal: 230, protein: 17.9, carbs: 39.9, fat: 0.8, emoji: "🍲" },
+  "paneer": { name: "Paneer (100g)", cal: 265, protein: 18.3, carbs: 1.2, fat: 20.8, emoji: "🧀" },
+  "tofu": { name: "Tofu (100g)", cal: 76, protein: 8.0, carbs: 1.9, fat: 4.8, emoji: "🍱" },
+  // Vegetables
+  "salad": { name: "Green Salad (1 bowl)", cal: 20, protein: 1.5, carbs: 3.5, fat: 0.2, emoji: "🥗" },
+  "potato": { name: "Potato (boiled, 100g)", cal: 87, protein: 1.9, carbs: 20.1, fat: 0.1, emoji: "🥔" },
+  "carrot": { name: "Carrot (100g)", cal: 41, protein: 0.9, carbs: 9.6, fat: 0.2, emoji: "🥕" },
+  "broccoli": { name: "Broccoli (100g)", cal: 34, protein: 2.8, carbs: 6.6, fat: 0.4, emoji: "🥦" },
+  "spinach": { name: "Spinach (1 cup)", cal: 23, protein: 2.9, carbs: 3.6, fat: 0.4, emoji: "🥬" },
+  // Fruits
+  "apple": { name: "Apple (1 medium)", cal: 95, protein: 0.5, carbs: 25.1, fat: 0.3, emoji: "🍎" },
+  "banana": { name: "Banana (1 medium)", cal: 105, protein: 1.3, carbs: 27.0, fat: 0.4, emoji: "🍌" },
+  "mango": { name: "Mango (1 cup)", cal: 99, protein: 1.4, carbs: 24.7, fat: 0.6, emoji: "🥭" },
+  "orange": { name: "Orange (1 medium)", cal: 62, protein: 1.2, carbs: 15.4, fat: 0.2, emoji: "🍊" },
+  "grapes": { name: "Grapes (1 cup)", cal: 104, protein: 1.1, carbs: 27.3, fat: 0.2, emoji: "🍇" },
+  // Dairy
+  "milk": { name: "Milk (1 glass, 250ml)", cal: 122, protein: 8.2, carbs: 11.7, fat: 4.8, emoji: "🥛" },
+  "curd": { name: "Curd / Yogurt (1 cup)", cal: 100, protein: 8.5, carbs: 11.4, fat: 0.7, emoji: "🍶" },
+  "butter": { name: "Butter (1 tbsp)", cal: 102, protein: 0.1, carbs: 0, fat: 11.5, emoji: "🧈" },
+  // Snacks & Fast Food
+  "burger": { name: "Burger (1 piece)", cal: 354, protein: 17.0, carbs: 40.0, fat: 14.0, emoji: "🍔" },
+  "pizza": { name: "Pizza (1 slice)", cal: 285, protein: 12.2, carbs: 35.7, fat: 10.4, emoji: "🍕" },
+  "samosa": { name: "Samosa (1 piece)", cal: 308, protein: 6.2, carbs: 34.5, fat: 17.0, emoji: "🥟" },
+  "pakora": { name: "Pakora (4 pieces)", cal: 160, protein: 4.5, carbs: 18.0, fat: 8.0, emoji: "🧆" },
+  "chips": { name: "Chips (small pack)", cal: 160, protein: 2.0, carbs: 16.0, fat: 10.0, emoji: "🍟" },
+  // Drinks
+  "tea": { name: "Tea with milk & sugar", cal: 55, protein: 1.0, carbs: 10.0, fat: 1.5, emoji: "☕" },
+  "coffee": { name: "Coffee (black)", cal: 5, protein: 0.3, carbs: 0, fat: 0, emoji: "☕" },
+  "juice": { name: "Fruit Juice (1 glass)", cal: 110, protein: 0.5, carbs: 26.0, fat: 0.3, emoji: "🧃" },
+  "lassi": { name: "Lassi (1 glass)", cal: 150, protein: 6.0, carbs: 22.0, fat: 4.0, emoji: "🥤" },
+};
+
+// ─── Image food detection simulation groups ─────────────────
+const FOOD_IMAGE_SCENARIOS = [
+  { label: "Indian Thali",       foods: ["rice", "roti", "dal", "curd", "salad"] },
+  { label: "Healthy Breakfast",  foods: ["egg", "bread", "milk", "banana"] },
+  { label: "Street Food",        foods: ["samosa", "pakora", "tea"] },
+  { label: "Fruit Bowl",         foods: ["apple", "banana", "mango", "grapes"] },
+  { label: "Fast Food Meal",     foods: ["burger", "chips", "juice"] },
+  { label: "South Indian Meal",  foods: ["idli", "dosa", "curd", "tea"] },
+  { label: "Vegetable Sabzi",    foods: ["potato", "spinach", "carrot", "roti"] },
+  { label: "Protein Meal",       foods: ["chicken", "egg", "salad", "rice"] },
+];
+
+let calorieDetectedFoods = [];
+let calorieManualFoods = [];
+
+// ─── Upload zone ────────────────────────────────────────────
+const calInput   = document.getElementById("calImageInput");
+const calZone    = document.getElementById("calUploadZone");
+const calPreview = document.getElementById("calPreviewImg");
+const calAnalyzeWrap = document.getElementById("calAnalyzeWrap");
+
+document.getElementById("calSelectBtn")?.addEventListener("click", () => calInput?.click());
+
+calInput?.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) previewCalImage(file);
+});
+
+calZone?.addEventListener("dragover", (e) => { e.preventDefault(); calZone.classList.add("drag-over"); });
+calZone?.addEventListener("dragleave", () => calZone.classList.remove("drag-over"));
+calZone?.addEventListener("drop", (e) => {
+  e.preventDefault();
+  calZone.classList.remove("drag-over");
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith("image/")) previewCalImage(file);
+});
+calZone?.addEventListener("click", (e) => {
+  if (e.target === calZone || e.target.classList.contains("ai-upload-icon") ||
+    e.target.classList.contains("ai-upload-title") || e.target.classList.contains("ai-upload-sub"))
+    calInput?.click();
+});
+
+function previewCalImage(file) {
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    calPreview.src = ev.target.result;
+    calPreview.style.display = "block";
+    calAnalyzeWrap.style.display = "flex";
+    calZone.style.display = "none";
+    document.getElementById("calResultSection").style.display = "none";
+    calorieDetectedFoods = [];
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─── Smart Food Detection ─────────────────────────────────
+/**
+ * Step 1: Check filename for food keyword matches against FOOD_DB.
+ * Step 2: Analyse image dominant color via Canvas API.
+ * Step 3: Combine signals → ranked food list.
+ * Results shown as "Suggestions" (honest about demo limitation).
+ */
+document.getElementById("calDetectBtn")?.addEventListener("click", () => {
+  const btn = document.getElementById("calDetectBtn");
+  btn.textContent = "🔍 Analysing image…"; btn.disabled = true;
+  const spinner = document.getElementById("calDetectSpinner");
+  spinner.style.display = "block";
+
+  // ── Signal 1: filename keyword matching ──────────────────
+  const fileName = (calInput?.files[0]?.name || "").toLowerCase().replace(/[_\-\.]/g, " ");
+  const filenameHits = [];
+  for (const [key, food] of Object.entries(FOOD_DB)) {
+    const aliases = [key, ...food.name.toLowerCase().split(/[\s,()/]+/)];
+    if (aliases.some(a => a.length > 2 && fileName.includes(a))) {
+      filenameHits.push(key);
+    }
+  }
+
+  // ── Signal 2: Canvas color analysis ─────────────────────
+  analyzeImageDominantColor(calPreview, (color) => {
+    const { r, g, b } = color;
+
+    // Map dominant color → food category weights
+    // Each category: [keys], score
+    const colorGroups = [];
+
+    const isGreen   = g > r + 20 && g > b + 20;
+    const isRed     = r > g + 30 && r > b + 30;
+    const isOrange  = r > 160 && g > 80 && g < 180 && b < 80;
+    const isYellow  = r > 180 && g > 160 && b < 100;
+    const isBrown   = r > 100 && g > 60 && g < 140 && b < 80 && r > g;
+    const isWhite   = r > 200 && g > 200 && b > 200;
+    const isDark    = r < 80  && g < 80  && b < 80;
+
+    if (isGreen)  colorGroups.push({ label: "Vegetable Plate", foods: ["salad", "broccoli", "spinach", "carrot"] });
+    if (isRed)    colorGroups.push({ label: "Fruit & Tomato",  foods: ["apple", "mango", "orange", "juice"] });
+    if (isOrange) colorGroups.push({ label: "Fruit Snack",     foods: ["mango", "carrot", "orange", "banana"] });
+    if (isYellow) colorGroups.push({ label: "Indian Staple",   foods: ["roti", "dal", "rice", "curd"] });
+    if (isBrown)  colorGroups.push({ label: "Cooked Meal",     foods: ["chicken", "rice", "dal", "egg", "roti"] });
+    if (isWhite)  colorGroups.push({ label: "Dairy / Rice",    foods: ["milk", "curd", "rice", "egg", "idli"] });
+    if (isDark)   colorGroups.push({ label: "Dark Food",       foods: ["coffee", "tea", "dal", "chicken"] });
+
+    // ── Signal 3: Merge & rank ───────────────────────────────
+    let finalFoods, label;
+
+    if (filenameHits.length >= 1) {
+      // Filename is the strongest signal — trust it first
+      finalFoods = [...new Set([...filenameHits, ...(colorGroups[0]?.foods || [])])].slice(0, 5);
+      label = "🔑 Filename + Image Analysis";
+    } else if (colorGroups.length > 0) {
+      // Fall back to color analysis
+      const group = colorGroups[0];
+      finalFoods = group.foods;
+      label = `🎨 Color Analysis: ${group.label}`;
+    } else {
+      // Last resort: balanced Indian meal as neutral default
+      finalFoods = ["rice", "dal", "roti", "salad"];
+      label = "🍽️ General Meal Estimate";
+    }
+
+    calorieDetectedFoods = finalFoods.filter(k => FOOD_DB[k]).map(key => ({ key, qty: 1 }));
+
+    btn.textContent = "🤖 Re-Analyse Photo"; btn.disabled = false;
+    spinner.style.display = "none";
+
+    renderCalorieDetectedList();
+    document.getElementById("calResultSection").style.display = "block";
+    document.getElementById("calScenarioLabel").textContent =
+      `⚠️ Suggestions (${label}) — edit below to correct`;
+    recalculateCalories();
+    document.getElementById("calResultSection").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+
+/**
+ * Draws image onto a 16×16 canvas and returns average RGB.
+ * Lightweight proxy for dominant color.
+ */
+function analyzeImageDominantColor(imgEl, callback) {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 16; canvas.height = 16;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(imgEl, 0, 0, 16, 16);
+    const data = ctx.getImageData(0, 0, 16, 16).data;
+    let r = 0, g = 0, b = 0, count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i]; g += data[i + 1]; b += data[i + 2]; count++;
+    }
+    callback({ r: r / count, g: g / count, b: b / count });
+  } catch {
+    // Canvas tainted (cross-origin) — fall back to filename only
+    callback({ r: 128, g: 128, b: 128 });
+  }
+}
+
+
+function renderCalorieDetectedList() {
+  const container = document.getElementById("calDetectedFoods");
+  if (!calorieDetectedFoods.length) {
+    container.innerHTML = `<div class="tbl-loading">No foods detected yet. Upload a photo or search manually.</div>`;
+    return;
+  }
+  container.innerHTML = calorieDetectedFoods.map((item, idx) => {
+    const f = FOOD_DB[item.key];
+    if (!f) return "";
+    return `
+      <div class="cal-food-item" id="cfood-${idx}">
+        <div class="cfi-emoji">${f.emoji}</div>
+        <div class="cfi-info">
+          <div class="cfi-name">${f.name}</div>
+          <div class="cfi-cals">${Math.round(f.cal * item.qty)} kcal</div>
+        </div>
+        <div class="cfi-qty">
+          <button class="cfi-qty-btn" onclick="changeCalFoodQty(${idx}, -1)">−</button>
+          <span class="cfi-qty-val">${item.qty}x</span>
+          <button class="cfi-qty-btn" onclick="changeCalFoodQty(${idx}, 1)">+</button>
+        </div>
+        <button class="cfi-remove-btn" onclick="removeCalFood(${idx})" title="Remove">✕</button>
+      </div>`;
+  }).join("");
+}
+
+function changeCalFoodQty(idx, delta) {
+  calorieDetectedFoods[idx].qty = Math.max(1, calorieDetectedFoods[idx].qty + delta);
+  renderCalorieDetectedList();
+  recalculateCalories();
+}
+
+function removeCalFood(idx) {
+  calorieDetectedFoods.splice(idx, 1);
+  renderCalorieDetectedList();
+  recalculateCalories();
+}
+
+// ─── Manual Search ──────────────────────────────────────────
+document.getElementById("calSearchInput")?.addEventListener("input", (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  const results = document.getElementById("calSearchResults");
+  if (!q) { results.innerHTML = ""; results.style.display = "none"; return; }
+
+  const matches = Object.entries(FOOD_DB).filter(([key, f]) =>
+    key.includes(q) || f.name.toLowerCase().includes(q)
+  ).slice(0, 8);
+
+  if (!matches.length) { results.innerHTML = "<div class='cal-search-item'>No results found</div>"; results.style.display = "block"; return; }
+  results.style.display = "block";
+  results.innerHTML = matches.map(([key, f]) => `
+    <div class="cal-search-item" onclick="addCalFood('${key}')">
+      <span>${f.emoji} ${f.name}</span>
+      <span class="csi-cal">${f.cal} kcal</span>
+    </div>`).join("");
+});
+
+function addCalFood(key) {
+  const existing = calorieDetectedFoods.find(i => i.key === key);
+  if (existing) { existing.qty++; }
+  else calorieDetectedFoods.push({ key, qty: 1 });
+
+  document.getElementById("calSearchInput").value = "";
+  document.getElementById("calSearchResults").innerHTML = "";
+  document.getElementById("calSearchResults").style.display = "none";
+  document.getElementById("calResultSection").style.display = "block";
+  renderCalorieDetectedList();
+  recalculateCalories();
+}
+
+// ─── Totals ─────────────────────────────────────────────────
+function recalculateCalories() {
+  let totalCal = 0, totalProt = 0, totalCarbs = 0, totalFat = 0;
+  calorieDetectedFoods.forEach(({ key, qty }) => {
+    const f = FOOD_DB[key];
+    if (!f) return;
+    totalCal   += f.cal * qty;
+    totalProt  += f.protein * qty;
+    totalCarbs += f.carbs * qty;
+    totalFat   += f.fat * qty;
+  });
+
+  document.getElementById("calTotalKcal").textContent = Math.round(totalCal);
+  document.getElementById("calTotalProt").textContent = totalProt.toFixed(1) + "g";
+  document.getElementById("calTotalCarbs").textContent = totalCarbs.toFixed(1) + "g";
+  document.getElementById("calTotalFat").textContent  = totalFat.toFixed(1) + "g";
+
+  // Calorie budget rating (based on 2000 kcal/day avg)
+  const pct = Math.min((totalCal / 2000) * 100, 100);
+  document.getElementById("calBudgetBar").style.width = pct + "%";
+  const barEl = document.getElementById("calBudgetBar");
+  if (pct < 40)       barEl.style.background = "var(--blue, #4a90d9)";
+  else if (pct < 80)  barEl.style.background = "#34c48b";
+  else if (pct < 100) barEl.style.background = "#f59e42";
+  else                barEl.style.background = "#ef4444";
+
+  document.getElementById("calBudgetLabel").textContent =
+    `${Math.round(totalCal)} / 2000 kcal (${Math.round(pct)}% of daily intake)`;
+
+  renderBestFoodSuggestions(totalCal, totalProt, totalCarbs, totalFat);
+}
+
+// ─── Best Food Suggestions Engine ──────────────────────────────
+// Daily reference targets (avg adult):  Cal 2000, Protein 50g, Carbs 275g, Fat 65g
+const DAILY_TARGETS = { cal: 2000, protein: 50, carbs: 275, fat: 65 };
+
+function renderBestFoodSuggestions(totalCal, totalProt, totalCarbs, totalFat) {
+  const container = document.getElementById("calBestFoods");
+  if (!container) return;
+
+  const gaps = {
+    protein: Math.max(0, (DAILY_TARGETS.protein - totalProt)  / DAILY_TARGETS.protein),
+    carbs:   Math.max(0, (DAILY_TARGETS.carbs   - totalCarbs) / DAILY_TARGETS.carbs),
+    fat:     Math.max(0, (DAILY_TARGETS.fat     - totalFat)   / DAILY_TARGETS.fat),
+    cal:     Math.max(0, (DAILY_TARGETS.cal     - totalCal)   / DAILY_TARGETS.cal),
+  };
+
+  const [weakMacro, weakGapFraction] = Object.entries(gaps).sort((a, b) => b[1] - a[1])[0];
+
+  if (weakGapFraction < 0.10) {
+    container.innerHTML = `
+      <div class="best-foods-header">
+        <span class="bf-icon">🏆</span>
+        <div>
+          <div class="bf-title">Great balance!</div>
+          <div class="bf-sub">Your meal covers all macros well. Stay hydrated 💧</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const alreadyAdded = new Set(calorieDetectedFoods.map(i => i.key));
+  const ranked = Object.entries(FOOD_DB)
+    .filter(([key]) => !alreadyAdded.has(key))
+    .map(([key, food]) => {
+      const value      = food[weakMacro] ?? 0;
+      const efficiency = food.cal > 0 ? (value / food.cal) * 100 : 0;
+      return { key, food, value, efficiency };
+    })
+    .sort((a, b) => b.efficiency - a.efficiency)
+    .slice(0, 3);
+
+  const META = {
+    protein: { label: "Protein",       emoji: "💪", color: "#4a90d9", unit: "g",    tip: "Builds muscle & keeps you full" },
+    carbs:   { label: "Carbs",         emoji: "⚡", color: "#f59e42", unit: "g",    tip: "Primary energy source for the body" },
+    fat:     { label: "Healthy Fats",  emoji: "🥑", color: "#34c48b", unit: "g",    tip: "Essential for brain & hormone health" },
+    cal:     { label: "Calories",      emoji: "🔥", color: "#ef4444", unit: " kcal",tip: "You need more energy for the day" },
+  };
+  const m = META[weakMacro];
+
+  container.innerHTML = `
+    <div class="best-foods-header">
+      <span class="bf-icon">${m.emoji}</span>
+      <div>
+        <div class="bf-title">Best to add for <span style="color:${m.color}">${m.label}</span></div>
+        <div class="bf-sub">${m.tip} &nbsp;·&nbsp; ${Math.round(weakGapFraction * 100)}% of daily ${m.label} still needed</div>
+      </div>
+    </div>
+    <div class="bf-list">
+      ${ranked.map(({ key, food, value }) => `
+        <div class="bf-item">
+          <span class="bf-emoji">${food.emoji}</span>
+          <div class="bf-info">
+            <div class="bf-food-name">${food.name}</div>
+            <div class="bf-macros">
+              <span style="color:${m.color};font-weight:700">${value}${m.unit} ${m.label}</span>
+              <span class="bf-dot">&middot;</span>
+              <span>${food.cal} kcal</span>
+            </div>
+          </div>
+          <button class="bf-add-btn" onclick="addCalFood('${key}')">+ Add</button>
+        </div>`).join("")}
+    </div>`;
+}
+
+// ─── Reset ──────────────────────────────────────────────────
+document.getElementById("calResetBtn")?.addEventListener("click", () => {
+  calorieDetectedFoods = [];
+  calPreview.style.display = "none";
+  calZone.style.display = "block";
+  calAnalyzeWrap.style.display = "none";
+  document.getElementById("calResultSection").style.display = "none";
+  document.getElementById("calSearchInput").value = "";
+  document.getElementById("calSearchResults").innerHTML = "";
+  document.getElementById("calSearchResults").style.display = "none";
+  document.getElementById("calScenarioLabel").textContent = "";
+  if (calInput) calInput.value = "";
 });
 

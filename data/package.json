@@ -1,7 +1,7 @@
 {
-  "name": "poshan-dristri-api",
+  "name": "poshan-drishti-api",
   "version": "1.0.0",
-  "description": "REST API for POSHAN DRISTRI — Child Nutrition Classification using WHO standards",
+  "description": "REST API for POSHAN DRISHTI — Child Nutrition Classification using WHO standards",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -14,11 +14,12 @@
     "malnutrition",
     "POSHAN"
   ],
-  "author": "POSHAN DRISTRI Team",
+  "author": "POSHAN DRISHTI Team",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "serverless-http": "^3.2.0",
     "sql.js": "^1.14.1"
   },
   "devDependencies": {

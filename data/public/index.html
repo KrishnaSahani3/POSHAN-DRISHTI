@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>POSHAN DRISTRI — Child Nutrition Screening</title>
+  <title>POSHAN DRISHTI — Child Nutrition Screening</title>
   <meta name="description"
-    content="WHO-standard child malnutrition screening and tracking dashboard for POSHAN DRISTRI." />
+    content="WHO-standard child malnutrition screening and tracking dashboard for POSHAN DRISHTI." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet" />
@@ -69,6 +69,19 @@
             <path d="M12 6v6l4 2" />
           </svg>
         </button>
+        <button class="icon-btn" data-page="bmicalc" title="BMI Calculator">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+          </svg>
+        </button>
+        <button class="icon-btn" data-page="caloriecalc" title="Calorie Calculator">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 8v4l3 3"/>
+          </svg>
+        </button>
       </nav>
       <div class="sidebar-avatar">
         <div class="avatar-circle">A</div>
@@ -81,7 +94,7 @@
       <!-- Top Navigation Bar -->
       <header class="topnav">
         <div class="topnav-left">
-          <span class="topnav-logo-text">POSHAN <strong>DRISTRI</strong></span>
+          <span class="topnav-logo-text">POSHAN <strong>DRISHTI</strong></span>
         </div>
         <nav class="topnav-center">
           <button class="topnav-btn active" data-page="dashboard">Dashboard</button>
@@ -90,6 +103,8 @@
           <button class="topnav-btn" data-page="history">Progress</button>
           <button class="topnav-btn" data-page="aidetect">🤖 AI Detect</button>
           <button class="topnav-btn" data-page="diet">🥗 Diet Plan</button>
+          <button class="topnav-btn" data-page="bmicalc">⚖️ BMI Calc</button>
+          <button class="topnav-btn" data-page="caloriecalc">🍱 Calorie Calc</button>
         </nav>
         <div class="topnav-right">
           <!-- Translation/Language Selector -->
@@ -140,7 +155,7 @@
               <div class="login-brand-icon">🌿</div>
               <h1 class="page-heading" style="text-align:center">Login</h1>
               <p class="page-subheading" style="text-align:center; margin-bottom:24px">Enter your mobile number to
-                access the POSHAN DRISTRI dashboard.</p>
+                access the POSHAN DRISHTI dashboard.</p>
 
               <form id="loginForm">
                 <div class="form-group" id="loginStep1">
@@ -408,6 +423,14 @@
               </div>
 
               <div class="recommendation-box" id="resultRec"></div>
+
+              <!-- Doctor Suggestions -->
+              <div id="doctorSuggestions" class="doctor-suggestions" style="display:none">
+                <div class="ds-title">👨‍⚕️ Suggested Doctors in your Area</div>
+                <div id="doctorList" class="ds-list">
+                  <!-- populated by JS -->
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -598,6 +621,194 @@
           </div>
 
           <div id="dietContent" class="diet-content-area"></div>
+        </section>
+
+        <!-- ═══════════════ BMI CALCULATOR PAGE ═══════════════ -->
+        <section id="page-bmicalc" class="page">
+          <h1 class="page-heading">⚖️ BMI Calculator</h1>
+          <p class="page-subheading">Calculate Body Mass Index (BMI) for adults. Enter weight and height to get an instant result.</p>
+
+          <div class="screen-layout">
+            <!-- Form Card -->
+            <div class="white-card screen-form-card">
+              <form id="bmiForm">
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Weight <span class="unit">(kg)</span></label>
+                    <input class="form-input" type="number" id="bmi_weight" placeholder="e.g. 60" min="1" max="300" step="0.1" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Height <span class="unit">(cm)</span></label>
+                    <input class="form-input" type="number" id="bmi_height" placeholder="e.g. 170" min="50" max="250" step="0.1" required />
+                  </div>
+                </div>
+                <div class="form-btns">
+                  <button type="submit" class="btn-primary">Calculate BMI</button>
+                  <button type="button" class="btn-secondary" id="bmiResetBtn">Reset</button>
+                </div>
+              </form>
+              <div id="bmiError" class="msg-error" style="display:none"></div>
+            </div>
+
+            <!-- Result Panel -->
+            <div id="bmiResultCard" class="result-panel" style="display:none">
+              <div class="result-banner" id="bmiBanner">
+                <div class="result-big-emoji" id="bmiEmoji"></div>
+                <div class="result-status-text" id="bmiValue"></div>
+                <div class="result-urgency-chip" id="bmiCategory"></div>
+              </div>
+
+              <div class="score-chips">
+                <div class="score-chip">
+                  <span class="chip-label">Weight</span>
+                  <span class="chip-val" id="bmiWeightDisplay">—</span>
+                </div>
+                <div class="score-chip">
+                  <span class="chip-label">Height</span>
+                  <span class="chip-val" id="bmiHeightDisplay">—</span>
+                </div>
+                <div class="score-chip">
+                  <span class="chip-label">BMI</span>
+                  <span class="chip-val" id="bmiFinalValue">—</span>
+                </div>
+              </div>
+
+              <!-- BMI Scale Bar -->
+              <div class="muac-meter-section">
+                <div class="muac-meter-label">BMI Scale</div>
+                <div class="muac-track">
+                  <div class="muac-seg" style="background:#4a90d9;flex:1"></div>
+                  <div class="muac-seg" style="background:#34c48b;flex:1"></div>
+                  <div class="muac-seg" style="background:#f59e42;flex:1"></div>
+                  <div class="muac-seg" style="background:#ef4444;flex:1"></div>
+                  <div class="muac-marker" id="bmiMarker"></div>
+                </div>
+                <div class="muac-track-labels">
+                  <span>16</span><span>18.5</span><span>25</span><span>30</span><span>40+</span>
+                </div>
+              </div>
+
+              <div class="recommendation-box" id="bmiRecommendation"></div>
+            </div>
+          </div>
+
+          <!-- Reference Table -->
+          <div class="white-card" style="margin-top:24px">
+            <div class="card-header-row">
+              <span class="card-title">BMI Classification (WHO)</span>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>BMI Range</th>
+                  <th>Risk Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>🔵 Underweight</td><td>&lt; 18.5</td><td>Low (malnutrition risk)</td></tr>
+                <tr><td>🟢 Normal weight</td><td>18.5 – 24.9</td><td>Lowest risk</td></tr>
+                <tr><td>🟠 Overweight</td><td>25.0 – 29.9</td><td>Increased risk</td></tr>
+                <tr><td>🔴 Obese Class I</td><td>30.0 – 34.9</td><td>High risk</td></tr>
+                <tr><td>🔴 Obese Class II</td><td>35.0 – 39.9</td><td>Very high risk</td></tr>
+                <tr><td>🔴 Obese Class III</td><td>≥ 40.0</td><td>Extremely high risk</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+ 
+        <!-- ═══════════════ CALORIE CALCULATOR PAGE ═══════════════ -->
+        <section id="page-caloriecalc" class="page">
+          <h1 class="page-heading">🔥 AI Calorie Calculator</h1>
+          <p class="page-subheading">Upload a meal photo to estimate calories or search for food items manually.</p>
+
+          <div class="screen-layout">
+            <!-- Left: Upload & Search -->
+            <div class="dash-left" style="display:flex; flex-direction:column; gap:20px">
+              
+              <!-- Upload Card -->
+              <div class="white-card">
+                <div class="ai-upload-zone" id="calUploadZone">
+                  <div class="ai-upload-icon">🍱</div>
+                  <div class="ai-upload-title">Upload food photo</div>
+                  <div class="ai-upload-sub">AI will detect items</div>
+                  <input type="file" id="calImageInput" accept="image/*" style="display:none" />
+                  <button type="button" class="btn-primary" style="margin-top:12px" id="calSelectBtn">Select Photo</button>
+                </div>
+                <img id="calPreviewImg" style="display:none;width:100%;border-radius:12px;margin-top:12px;max-height:200px;object-fit:cover" />
+                <div id="calAnalyzeWrap" style="display:none;margin-top:12px;flex-direction:column;gap:10px">
+                  <button class="btn-primary" id="calDetectBtn" style="width:100%">🤖 Detect Foods from Photo</button>
+                  <div id="calDetectSpinner" style="display:none; text-align:center; font-size:12px; color:var(--purple)">
+                    <span class="spinner-icon">🔄</span> Detecting items...
+                  </div>
+                </div>
+              </div>
+
+              <!-- Manual Search Card -->
+              <div class="white-card">
+                <div class="card-title" style="margin-bottom:12px">Search Food Items</div>
+                <div style="position:relative">
+                  <input type="text" id="calSearchInput" class="form-input" placeholder="e.g. Rice, Roti, Chicken..." />
+                  <div id="calSearchResults" class="cal-search-dropdown" style="display:none"></div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right: Results -->
+            <div class="dash-center" id="calResultSection" style="display:none">
+              <div class="white-card">
+                <div class="card-header-row">
+                  <span class="card-title">Detected Items</span>
+                  <span class="card-meta" id="calScenarioLabel"></span>
+                </div>
+                
+                <div id="calDetectedFoods" class="cal-food-list">
+                  <!-- items added by JS -->
+                </div>
+
+                <div class="cal-summary-box">
+                  <div class="cal-total-row">
+                    <span>Total Estimated Intake</span>
+                    <span class="cal-total-num"><span id="calTotalKcal">0</span> kcal</span>
+                  </div>
+                  
+                  <!-- Progress Bar -->
+                  <div class="cal-budget-wrap">
+                    <div class="cal-budget-bar">
+                      <div class="cal-budget-fill" id="calBudgetBar" style="width: 0%"></div>
+                    </div>
+                    <div class="cal-budget-text" id="calBudgetLabel">0 / 2000 kcal</div>
+                  </div>
+
+                  <div class="cal-macros-grid">
+                    <div class="macro-item">
+                      <div class="macro-label">Protein</div>
+                      <div class="macro-val" id="calTotalProt">0g</div>
+                    </div>
+                    <div class="macro-item">
+                      <div class="macro-label">Carbs</div>
+                      <div class="macro-val" id="calTotalCarbs">0g</div>
+                    </div>
+                    <div class="macro-item">
+                      <div class="macro-label">Fats</div>
+                      <div class="macro-val" id="calTotalFat">0g</div>
+                    </div>
+                  </div>
+
+                  <!-- Best Food Recommendations -->
+                  <div class="bf-panel" id="calBestFoods">
+                    <!-- populated by JS -->
+                  </div>
+
+                  <div class="form-btns" style="margin-top:16px">
+                    <button class="btn-secondary" id="calResetBtn" style="width:100%">Clear All Items</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </section>
 
       </main>
